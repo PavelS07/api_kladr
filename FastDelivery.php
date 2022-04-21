@@ -14,11 +14,18 @@ class FastDelivery extends Api {
 
     public function getData() {
         $obj = json_decode($this->query());
+        $result = [];
 
-        $result['days'] = $obj->{'time'}->{'value'};
-        $result['arrival'] = $obj->{'order_dates'}->{'arrival_to_osp_receiver'};
-        $result['price'] = number_format($obj->{'price'} + $this->basePrice, 2);
+        if(isset($obj->{'errors'})) {
+            foreach ($obj->{'errors'} as $k => $val) {
+                $result['error'][$k] = $val;
+            }
+        } else {
+            $result['days'] = (int)$obj->{'time'}->{'value'};
+            $result['arrival'] = $obj->{'order_dates'}->{'arrival_to_osp_receiver'};
+            $result['price'] = number_format($obj->{'price'} + $this->basePrice, 2);
+        }
 
-        return json_encode($result);
+        return json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 }

@@ -19,21 +19,28 @@ class SlowDelivery extends Api {
 
     public function getData() {
         $obj = json_decode($this->query());
+        $result = [];
 
-        $result['days'] = $obj->{'time'}->{'value'};
+        if(isset($obj->{'errors'})) {
+            foreach ($obj->{'errors'} as $k => $val) {
+                $result['error'][$k] = $val;
+            }
+        } else {
+            $result['days'] = $obj->{'time'}->{'value'};
 
-        $coefficient = $result['days'] / ($result['days'] + $this->plusDays);
-        $coefficient = $coefficient > 0.8 ? 0.8 : $coefficient;
+            $coefficient = $result['days'] / ($result['days'] + $this->plusDays);
+            $coefficient = $coefficient > 0.8 ? 0.8 : $coefficient;
 
-        $result['days'] += $this->plusDays;
+            $result['days'] += $this->plusDays;
 
-        // обновляем дату
-        $date = new DateTime($obj->{'order_dates'}->{'arrival_to_osp_receiver'});
-        $date->add(new DateInterval('P'.$this->plusDays.'D'));
+            // обновляем дату
+            $date = new DateTime($obj->{'order_dates'}->{'arrival_to_osp_receiver'});
+            $date->add(new DateInterval('P'.$this->plusDays.'D'));
 
-        $result['arrival'] = $date->format('Y-m-d');
-        $result['price'] = number_format($obj->{'price'}*$coefficient + $this->basePrice, 2);
+            $result['arrival'] = $date->format('Y-m-d');
+            $result['price'] = number_format($obj->{'price'}*$coefficient + $this->basePrice, 2);
+        }
 
-        return json_encode($result);
+        return json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 }
